@@ -19,11 +19,9 @@ conv_img_features = "/your_dir/ucf11_features/image_pool5/"
 fc_img_features = "/your_dir/ucf11_features/image_fc6/"
 
 
-train_list = "/your_dir/ucf11TrainTestlist/ucf11_train.txt"
-test_list = "/your_dir/ucf11TrainTestlist/ucf11_test.txt"
-classInd = "/your_dir/ucf11TrainTestlist/classInd.txt"
-
-
+train_list = "C:\\Users\\user\\Desktop\\git\\DTA\\ucf11TrainTestlist\\ucf11_train.txt"
+test_list = "C:\\Users\\user\\Desktop\\git\\DTA\\ucf11TrainTestlist\\ucf11_test.txt"
+classInd = "C:\\Users\\user\\Desktop\\git\\DTA\\ucf11TrainTestlist\\classInd.txt"
 
 
 
@@ -58,7 +56,7 @@ for label in labels:
   nums.append(int(a[0])-1)
   names.append(a[1][:-2])
 label_dict = dict(zip(names,nums))
-print label_dict
+print(label_dict)
 
 
 train_lines = []
@@ -67,7 +65,7 @@ lines_ = f.readlines()
 for i in range(len(lines_)//scale):
   train_lines.append(lines_[i*scale])
 len_train = len(train_lines)
-print "successfully,len(train_list)",len_train
+print("successfully,len(train_list)",len_train)
 random.shuffle(train_lines)
 
 
@@ -80,9 +78,7 @@ test_lines = []
 for i in range(len(test_lines_)//scale):
   test_lines.append(test_lines_[i*scale])
 len_test = len(test_lines)
-print "successfully,len(test_list)",len_test
-
-
+print("successfully,len(test_list)",len_test)
 
 
 
@@ -93,7 +89,7 @@ for test_video in test_lines:
     ground_label = label_dict[video_class]
     test_labels.append(ground_label)
 
-print test_labels
+print(test_labels)
 
 #########################################################################
 
@@ -133,18 +129,7 @@ def compute_score_loss(batch_fc_img,batch_conv_img,batch_labels):
             ys : batch_labels
             })
     return fc_score,conv_score,video_loss
-
-
-
-
-
 #################################################################################
-
-
-
-
-
-
 fc_img = tf.placeholder(tf.float32, [None, 40, 4096]) 
 
 conv_img = tf.placeholder(tf.float32, [None, timesteps] + shape_1 + [channels]) 
@@ -153,9 +138,6 @@ conv_img = tf.placeholder(tf.float32, [None, timesteps] + shape_1 + [channels])
 
 ys = tf.placeholder(tf.float32, [None, n_classes])
 Lr = tf.placeholder(tf.float32) 
-
-
-
 
 
 def FC_LSTM(X_spa,attention):
@@ -250,7 +232,7 @@ conv_pred = tf.nn.softmax(conv_result)
 fc_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=fc_result, labels=ys))
 conv_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=conv_result, labels=ys))
 loss = fc_loss+conv_loss
-print loss
+print(loss)
 
 
 
@@ -341,7 +323,7 @@ for l in range(1000):
             batch_labels[n_num*k:n_num*k+n_num] = label
             k = k+1
         time2 = time.time()
-        print "batch_read_time:", '{0:.2f}'.format(time2-time1),"s"
+        print("batch_read_time:", '{0:.2f}'.format(time2-time1),"s")
         k = k+1
 
         loss_,_ = sess.run([loss,train_op], feed_dict={
@@ -351,7 +333,7 @@ for l in range(1000):
             Lr : lr
         })
 
-        print "batch_loss:",loss_
+        print("batch_loss:",loss_)
         pbar.update(1)
     pbar.close()
 
@@ -360,7 +342,7 @@ for l in range(1000):
     model_name = "fc+conv_lstm_tmp_attention/"+str(l)+"epoch_model.ckpt"
     saver.save(sess, model_name)
 
-    print "successfully,start_test!"
+    print("successfully,start_test!")
 
 ############################################################################################
 
@@ -405,7 +387,7 @@ for l in range(1000):
             batch_labels[n_num*k:n_num*k+n_num] = label
             k = k+1
         test_fc_score, test_conv_score, test_loss = compute_score_loss(batch_fc_img,batch_conv_img,batch_labels)
-        print "test_loss:",test_loss
+        print("test_loss:",test_loss)
         test_fc_score = np.sum(np.reshape(np.array(test_fc_score),(batch_size,n_num,n_classes)),axis=1)    #(batch_size, n_classes)
         test_conv_score = np.sum(np.reshape(np.array(test_conv_score),(batch_size,n_num,n_classes)),axis=1) 
     
@@ -418,15 +400,15 @@ for l in range(1000):
     conv_scores = np.reshape(np.array(conv_scores),(-1,n_classes))[:len_test]
 
 
-    print fc_scores.shape
-    print conv_scores.shape
+    print(fc_scores.shape)
+    print(conv_scores.shape)
 
     pbar.close()
 
     num_test_score = fc_scores
     test_label_pred = np.argmax(num_test_score,axis = 1)
-    print test_label_pred.shape
-    print l,"epoch:, attention，Fc_lstm_ACC:",accuracy(test_label_pred,test_labels)
+    print(test_label_pred.shape)
+    print(l,"epoch:, attention，Fc_lstm_ACC:",accuracy(test_label_pred,test_labels))
     test_info = []
     for i in range(len_test):
       video_info = []
@@ -442,8 +424,8 @@ for l in range(1000):
 
     num_test_score = conv_scores
     test_label_pred = np.argmax(num_test_score,axis = 1)
-    print test_label_pred.shape
-    print l,"epoch:, attention，Conv_lstm_ACC:",accuracy(test_label_pred,test_labels)
+    print(test_label_pred.shape)
+    print(l,"epoch:, attention，Conv_lstm_ACC:",accuracy(test_label_pred,test_labels))
     test_info = []
     for i in range(len_test):
       video_info = []
@@ -463,8 +445,8 @@ for l in range(1000):
 
     num_test_score = np.add(fc_scores,conv_scores)
     test_label_pred = np.argmax(num_test_score,axis = 1)
-    print test_label_pred.shape
-    print l,"epoch:, attention，Add_fusion_ACC:",accuracy(test_label_pred,test_labels)
+    print(test_label_pred.shape)
+    print(l,"epoch:, attention，Add_fusion_ACC:",accuracy(test_label_pred,test_labels))
     test_info = []
     for i in range(len_test):
       video_info = []
@@ -479,8 +461,8 @@ for l in range(1000):
 
     mul_test_score = np.multiply(fc_scores,conv_scores)
     test_label_pred = np.argmax(mul_test_score,axis = 1)
-    print test_label_pred.shape
-    print l,"epoch:, attention，Mul_fusion_ACC:",accuracy(test_label_pred,test_labels)
+    print(test_label_pred.shape)
+    print(l,"epoch:, attention，Mul_fusion_ACC:",accuracy(test_label_pred,test_labels))
     test_info = []
     for i in range(len_test):
       video_info = []
