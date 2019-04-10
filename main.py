@@ -23,9 +23,6 @@ train_list = "C:\\Users\\user\\Desktop\\git\\DTA\\ucf11TrainTestlist\\ucf11_trai
 test_list = "C:\\Users\\user\\Desktop\\git\\DTA\\ucf11TrainTestlist\\ucf11_test.txt"
 classInd = "C:\\Users\\user\\Desktop\\git\\DTA\\ucf11TrainTestlist\\classInd.txt"
 
-
-
-
 batch_size = 6
 n_inputs = 4096   
 n_steps = 40    
@@ -164,7 +161,6 @@ def FC_LSTM(X_spa,attention):
         outputs_spa = tf.reduce_sum(outputs_spa,axis = 1)
         return outputs_spa
 
-
 def CONV_LSTM(conv_img,shape,attention):
     img_cell = ConvLSTMCell(shape, filters, kernel)
     img_outputs, img_state = tf.nn.dynamic_rnn(img_cell, conv_img, dtype=conv_img.dtype, time_major=True)
@@ -177,73 +173,36 @@ def CONV_LSTM(conv_img,shape,attention):
         img_outputs = tf.reduce_sum(img_outputs,axis = 1)
         return img_outputs  
 
-
-
-
 def FC_layer(inputs):
-  
-
-    weights2 =  tf.get_variable("weights2", [n_hidden_units, n_classes],
-        initializer=tf.truncated_normal_initializer())
-    biases2 = tf.get_variable("biases2", [n_classes],
-        initializer=tf.truncated_normal_initializer())
+    weights2 =  tf.get_variable("weights2", [n_hidden_units, n_classes],initializer=tf.truncated_normal_initializer())
+    biases2 = tf.get_variable("biases2", [n_classes],initializer=tf.truncated_normal_initializer())
     result = tf.nn.dropout((tf.matmul(inputs, weights2) + biases2), 0.5)
-
     return result
-
-
-
-
-
-
-
-
 
 fc_img_out = FC_LSTM(fc_img, True)
 conv_img_out = CONV_LSTM(conv_img, shape_1,True)
-
 
 fc_img_drop = tf.nn.dropout(fc_img_out, 0.5)
 conv_img_drop = tf.nn.dropout(conv_img_out, 0.5)
 conv_img_drop = tf.nn.max_pool(conv_img_drop,[1,7,7,1],[1,1,1,1],padding='VALID')
 conv_img_drop = tf.reshape(conv_img_drop,[-1,filters])
 
-
-
-
-
 with tf.variable_scope("FC"):
     fc_result = FC_layer(fc_img_drop)
     tf.get_variable_scope().reuse_variables()
     conv_result = FC_layer(conv_img_drop)
 
-
-
-
-
-
-
-
 fc_pred = tf.nn.softmax(fc_result)
 conv_pred = tf.nn.softmax(conv_result)
-
-
 
 fc_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=fc_result, labels=ys))
 conv_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=conv_result, labels=ys))
 loss = fc_loss+conv_loss
 print(loss)
 
-
-
-
-
-
 train_op = tf.train.AdamOptimizer(Lr).minimize(loss)
 
-
 config = tf.ConfigProto() 
-
 
 saver = tf.train.Saver()
 
@@ -251,35 +210,17 @@ if not os.path.exists('fc+conv_lstm_tmp_attention'):
     os.mkdir('fc+conv_lstm_tmp_attention/')
 sess = tf.Session(config=config)
 
-
-
-
-
 merged = tf.summary.merge_all()
 
 writer = tf.summary.FileWriter("logs/", sess.graph)
 init_op = tf.global_variables_initializer() 
 sess.run(init_op)
 
-
 ############################################start_training###########################################
 
 
 k = 0
 u = 0
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 full_loss = []
 for l in range(1000):
@@ -337,28 +278,19 @@ for l in range(1000):
         pbar.update(1)
     pbar.close()
 
-
-
     model_name = "fc+conv_lstm_tmp_attention/"+str(l)+"epoch_model.ckpt"
     saver.save(sess, model_name)
 
     print("successfully,start_test!")
 
 ############################################################################################
-
-
     pbar = tqdm(total=((len_test//batch_size)+1))
     fc_scores = []
     conv_scores = []
     for i in range((len_test//batch_size)+1):
-
-
         batch_fc_img = np.zeros((n_num*batch_size,40,4096),dtype = np.float32)
         batch_conv_img = np.zeros((n_num*batch_size,40,7,7,512),dtype = np.float32)
         batch_labels = np.zeros((n_num*batch_size,n_classes),dtype = np.int8)
-
-
-
 
         time1 = time.time()
         k= 0
@@ -375,7 +307,6 @@ for l in range(1000):
             label = np.expand_dims(one_hot,axis = 0)
             label = label.repeat(10,axis=0)
 
-
             conv_img_fea = conv_feature(feature_name)
             conv_img_fea = np.transpose(conv_img_fea,(1,0,3,4,2))
 
@@ -391,14 +322,11 @@ for l in range(1000):
         test_fc_score = np.sum(np.reshape(np.array(test_fc_score),(batch_size,n_num,n_classes)),axis=1)    #(batch_size, n_classes)
         test_conv_score = np.sum(np.reshape(np.array(test_conv_score),(batch_size,n_num,n_classes)),axis=1) 
     
-
-
         fc_scores.append(test_fc_score)
         conv_scores.append(test_conv_score)
         pbar.update(1)
     fc_scores = np.reshape(np.array(fc_scores),(-1,n_classes))[:len_test]
     conv_scores = np.reshape(np.array(conv_scores),(-1,n_classes))[:len_test]
-
 
     print(fc_scores.shape)
     print(conv_scores.shape)
@@ -419,9 +347,6 @@ for l in range(1000):
     npz_name = "score_attention/"+str(l)+"_epoch_fc_score.npz"
     np.savez(npz_name, test_info=test_info)
 
-
-
-
     num_test_score = conv_scores
     test_label_pred = np.argmax(num_test_score,axis = 1)
     print(test_label_pred.shape)
@@ -436,13 +361,6 @@ for l in range(1000):
     npz_name = "score_attention/"+str(l)+"_epoch_conv_score.npz"
     np.savez(npz_name, test_info=test_info)
 
-
-
-
-
-
-
-
     num_test_score = np.add(fc_scores,conv_scores)
     test_label_pred = np.argmax(num_test_score,axis = 1)
     print(test_label_pred.shape)
@@ -456,8 +374,6 @@ for l in range(1000):
       
     npz_name = "score_attention/"+str(l)+"_epoch_numscore.npz"
     np.savez(npz_name, test_info=test_info)
-
-
 
     mul_test_score = np.multiply(fc_scores,conv_scores)
     test_label_pred = np.argmax(mul_test_score,axis = 1)
