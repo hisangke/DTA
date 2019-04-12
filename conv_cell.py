@@ -19,8 +19,7 @@ from tensorflow.python.util import nest
 
 class ConvLSTMCell(tf.contrib.rnn.RNNCell):
 
-  def __init__(self, shape, num_filters, kernel_size, forget_bias=1.0, 
-               input_size=None, state_is_tuple=True, activation=tf.nn.tanh, reuse=None):
+  def __init__(self, shape, num_filters, kernel_size, forget_bias=1.0, input_size=None, state_is_tuple=True, activation=tf.nn.tanh, reuse=None):
     self._shape = shape
     self._num_filters = num_filters
     self._kernel_size = kernel_size
